@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Французская революция: карточки</title>
+<style>
+:root{--bg:#EEF1F7;--card:#fff;--ink:#17203D;--muted:#586180;--line:#D3D9E8;--blue:#22397F;--red:#B7352C;--on:#fff}
+@media (prefers-color-scheme:dark){:root{--bg:#10162A;--card:#1A2240;--ink:#EDEFF7;--muted:#A4ADCA;--line:#2D3759;--blue:#8EA5F2;--red:#F0867C;--on:#10162A}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+main{max-width:640px;margin:0 auto;padding:24px 16px 40px}
+h1{font:700 1.6rem/1.2 Georgia,"Times New Roman",serif;margin:0 0 4px}
+.sub{margin:0 0 16px;color:var(--muted);font-size:.95rem}
+.flag{display:flex;height:6px;border-radius:3px;overflow:hidden;border:1px solid var(--line);margin-bottom:16px}
+.flag i{flex:1}.flag i:nth-child(1){background:var(--blue)}.flag i:nth-child(2){background:var(--card)}.flag i:nth-child(3){background:var(--red)}
+.scene{perspective:1200px}
+.card{display:grid;width:100%;min-height:320px;padding:0;border:0;background:none;color:inherit;font:inherit;text-align:left;cursor:pointer;transform-style:preserve-3d;transition:transform .5s}
+.card.flipped{transform:rotateY(180deg)}
+.face{grid-area:1/1;display:flex;flex-direction:column;justify-content:center;gap:12px;padding:28px 24px;background:var(--card);border:1px solid var(--line);border-radius:12px;backface-visibility:hidden;-webkit-backface-visibility:hidden}
+.front{border-top:4px solid var(--blue)}
+.back{border-top:4px solid var(--red);transform:rotateY(180deg)}
+.tag{font-size:.85rem;color:var(--muted)}
+.text{font:1.25rem/1.55 Georgia,"Times New Roman",serif}
+.back .text{font-size:1.1rem}
+.hint{margin:10px 0 0;text-align:center;color:var(--muted);font-size:.9rem}
+.row{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap}
+.row button{flex:1 1 120px;padding:12px 14px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink);font:inherit;cursor:pointer}
+.row button:hover{border-color:var(--muted)}
+.row .know{background:var(--blue);border-color:var(--blue);color:var(--on)}
+.row .again{border-color:var(--red);color:var(--red)}
+.row button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+button:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+.stat{display:flex;justify-content:space-between;color:var(--muted);font-size:.95rem;margin-bottom:8px}
+@media (prefers-reduced-motion:reduce){.card{transition:none}}
+</style>
+</head>
+<body>
+<main>
+<h1>Французская революция</h1>
+<p class="sub">История, 8 класс, § 16–20. Нажмите на карточку, чтобы увидеть ответ.</p>
+<div class="flag" aria-hidden="true"><i></i><i></i><i></i></div>
+<div class="stat"><span id="pos"></span><span id="known"></span></div>
+<div class="scene">
+<button class="card" id="card" type="button" aria-label="Карточка. Нажмите, чтобы перевернуть">
+<span class="face front" id="front"><span class="tag">Вопрос</span><span class="text" id="q"></span></span>
+<span class="face back" id="back" aria-hidden="true"><span class="tag">Ответ</span><span class="text" id="a"></span></span>
+</button>
+</div>
+<p class="hint">Стрелки на клавиатуре листают карточки, пробел переворачивает.</p>
+<div class="row">
+<button type="button" id="again" class="again">Ещё раз</button>
+<button type="button" id="knew" class="know">Знаю</button>
+</div>
+<div class="row">
+<button type="button" id="prev">Назад</button>
+<button type="button" id="next">Вперёд</button>
+</div>
+<div class="row">
+<button type="button" id="shuffle">Перемешать</button>
+<button type="button" id="only" aria-pressed="false">Только неизученные</button>
+<button type="button" id="reset">Сначала</button>
+</div>
+</main>
+<script>
+var CARDS=[
+{q:"Какое событие считается началом революции?",a:"Взятие Бастилии, 14 июля 1789 г."},
+{q:"Чем закончился этап Учредительного собрания (1789–1791)?",a:"Принятием Конституции 1791 г. (конституционная монархия). Король остался главой исполнительной власти, но под контролем депутатов."},
+{q:"Что произошло 10 августа 1792 г.?",a:"Штурм Тюильри, падение монархии. Королевская семья в тюрьме, Конституция 1791 г. перестала действовать."},
+{q:"Какая группировка хотела завершить революцию, считая, что цели достигнуты?",a:"Фейяны (вышли из Якобинского клуба). Жирондисты были за республику, монтаньяры за радикальные преобразования."},
+{q:"Когда был казнён Людовик XVI?",a:"21 января 1793 г. по приговору Конвента."},
+{q:"Что произошло 31 мая – 2 июня 1793 г.?",a:"Восстание, изгнание части жирондистов из Конвента. Против Парижа выступили 60 из 83 департаментов, началась гражданская война."},
+{q:"Что такое «максимум»?",a:"Предельные цены на товары первой необходимости (при монтаньярах). Крестьяне не хотели продавать зерно по этим ценам, Конвент отбирал его силой. При Термидоре максимум отменили."},
+{q:"Какой закон сентября 1793 г. разрешал арестовывать неблагонадёжных, даже не совершивших преступления?",a:"Закон о подозрительных."},
+{q:"Что произошло 9 термидора II года (27 июля 1794 г.)?",a:"Робеспьер и его сторонники исключены из Конвента, на следующий день казнены. Вместе с ним погибли Сен-Жюст и Кутон."},
+{q:"Какие меры приняли термидорианцы?",a:"Отменили максимум и вернули свободу торговли, закрыли Якобинский клуб, ослабили Комитет общественного спасения, вернули свободу слова, выпустили заключённых."},
+{q:"Кому Конституция 1795 г. вручала исполнительную власть?",a:"Директории из пяти человек, которую избирал Законодательный корпус. Корпус впервые состоял из двух палат: Совета пятисот и Совета старейшин."},
+{q:"Чем дополнили «Декларацию прав» в Конституции 1795 г.?",a:"«Декларацией обязанностей»."},
+{q:"Как называют колебания Директории «вправо» и «влево»?",a:"Политикой качелей. Побеждали якобинцы на выборах, результаты отменяли. Брали верх монархисты, их ссылали в Гвиану."},
+{q:"Что стало с сыном Людовика XVI (Людовиком XVII)?",a:"Умер на воспитании у сапожника. Королём себя провозгласил граф Прованский, Людовик XVIII."},
+{q:"Кого прозвали «королём Директории»?",a:"Барраса. Он единственный из директоров оставался у власти весь период и продвигал Бонапарта."},
+{q:"Что произошло 18 брюмера (9 ноября 1799 г.)?",a:"Переворот Бонапарта. Заседания Советов перенесли в Сен-Клу, Совет пятисот разогнали солдаты, власть перешла к трём консулам. Директория пала, революция окончилась."},
+{q:"Почему промышленный переворот во Франции произошёл позже, чем в Англии?",a:"Крестьяне получили землю, закрепилось мелкое землевладение. Беднота не уходила в города (узкий рынок рабочей силы), деньги шли в покупку земли, а не в промышленность. Войны подорвали внешнюю торговлю."},
+{q:"Что в учебнике названо вандализмом?",a:"Политика разрушения памятников архитектуры, скульптур, церквей и архивов в годы диктатуры монтаньяров (так её назвали при Термидоре). Нотр-Дам превратили в «храм разума», потом в склад. Кондорсе умер в тюрьме, Лавуазье казнён."},
+{q:"Почему Россия вышла из Второй антифранцузской коалиции?",a:"Из-за действий союзников: англичане плохо снабжали русские войска в Голландии, австрийцы оставили без прикрытия русский корпус в Швейцарии. Разгневанный Павел I вывел Россию из коалиции. Главная причина неудачи коалиции: разобщённость."},
+{q:"Какое место заняла Франция в Европе по росту населения?",a:"Последнее. Революционные войны, голод и террор, население городов уменьшилось."}
+];
+var KEY="fr-rev-cards-known";
+var known={},order=[],pos=0,only=false;
+function $(id){return document.getElementById(id)}
+try{known=JSON.parse(localStorage.getItem(KEY)||"{}")}catch(e){known={}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(known))}catch(e){}}
+function reset(){order=CARDS.map(function(_,i){return i});pos=0}
+function list(){return only?order.filter(function(i){return !known[i]}):order}
+var reduce=window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches;
+function show(flipBack){
+  var l=list(),card=$("card"),back=$("back");
+  var n=0;for(var k in known){if(known[k])n++}
+  $("known").textContent="Знаю: "+n+" из "+CARDS.length;
+  if(!l.length){
+    card.classList.remove("flipped");back.setAttribute("aria-hidden","true");
+    $("q").textContent="Все карточки выучены. Нажмите «Сначала», чтобы начать заново.";$("a").textContent="";$("pos").textContent="";return;
+  }
+  if(pos>=l.length)pos=0;if(pos<0)pos=l.length-1;
+  var c=CARDS[l[pos]];
+  $("pos").textContent="Карточка "+(pos+1)+" из "+l.length;
+  $("q").textContent=c.q;
+  var wasFlipped=card.classList.contains("flipped");
+  card.classList.remove("flipped");back.setAttribute("aria-hidden","true");$("front").setAttribute("aria-hidden","false");
+  if(wasFlipped&&!reduce){setTimeout(function(){$("a").textContent=c.a},300)}else{$("a").textContent=c.a}
+}
+function flip(){
+  if(!list().length)return;
+  var card=$("card"),on=card.classList.toggle("flipped");
+  $("back").setAttribute("aria-hidden",on?"false":"true");
+  $("front").setAttribute("aria-hidden",on?"true":"false");
+}
+function go(d){pos+=d;show()}
+function mark(v){
+  var l=list();if(!l.length)return;
+  known[l[pos]]=v;save();
+  if(only&&v){show()}else{pos++;show()}
+}
+$("card").addEventListener("click",flip);
+$("next").addEventListener("click",function(){go(1)});
+$("prev").addEventListener("click",function(){go(-1)});
+$("knew").addEventListener("click",function(){mark(true)});
+$("again").addEventListener("click",function(){mark(false)});
+$("shuffle").addEventListener("click",function(){
+  for(var i=order.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=order[i];order[i]=order[j];order[j]=t}
+  pos=0;show();
+});
+$("only").addEventListener("click",function(){
+  only=!only;this.setAttribute("aria-pressed",only?"true":"false");pos=0;show();
+});
+$("reset").addEventListener("click",function(){
+  known={};save();only=false;$("only").setAttribute("aria-pressed","false");reset();show();
+});
+document.addEventListener("keydown",function(e){
+  if(e.key==="ArrowRight")go(1);else if(e.key==="ArrowLeft")go(-1);
+});
+reset();show();
+</script>
+</body>
+</html>
